@@ -1,6 +1,7 @@
 import { K8s, registerRoute, registerSidebarEntry } from '@kinvolk/headlamp-plugin/lib';
-import { SimpleTable } from '@kinvolk/headlamp-plugin/lib/CommonComponents';
+import { ResourceListView } from '@kinvolk/headlamp-plugin/lib/CommonComponents';
 
+// Define the KubeObject for NodeReadinessRule
 export class NodeReadinessRule extends K8s.crd.makeCustomResourceClass({
   apiInfo: [{
     group: 'readiness.node.x-k8s.io',
@@ -14,29 +15,57 @@ export class NodeReadinessRule extends K8s.crd.makeCustomResourceClass({
 
 function ReadinessRulesPage() {
   return (
-    <SimpleTable
+    <ResourceListView
+      title="Node Readiness Rules"
+      resourceClass={NodeReadinessRule}
+      id="nrc-readiness-rules"
       columns={[
-        { label: 'Name', getter: (item) => item.name || 'Unknown' },
-        { label: 'Age', getter: (item) => item.metadata?.creationTimestamp || 'Unknown' },
+        'name',
+        {
+          id: 'enforcementMode',
+          label: 'Enforcement Mode',
+          getValue: (rule: InstanceType<typeof NodeReadinessRule>) =>
+            rule.jsonData?.spec?.enforcementMode || 'N/A',
+        },
+        {
+          id: 'taintKey',
+          label: 'Taint Key',
+          getValue: (rule: InstanceType<typeof NodeReadinessRule>) =>
+            rule.jsonData?.spec?.taint?.key || 'None',
+        },
+        {
+          id: 'conditionPolicy',
+          label: 'Condition Policy',
+          getValue: (rule: InstanceType<typeof NodeReadinessRule>) =>
+            rule.jsonData?.spec?.conditionPolicy || 'N/A',
+        },
+        {
+          id: 'conditions',
+          label: 'Conditions',
+          getValue: (rule: InstanceType<typeof NodeReadinessRule>) => {
+            const conditions = rule.jsonData?.spec?.conditions;
+            return conditions ? String(conditions.length) : '0';
+          },
+        },
+        'age',
       ]}
-      data={[]}
     />
   );
 }
-
+// Register the route
 registerRoute({
   path: '/nrc-rules',
   component: () => <ReadinessRulesPage />,
   exact: true,
   name: 'Readiness Rules',
-  sidebar: 'nrc-rules-list',
+  sidebar: 'nrc-rules-list', // Connects the route to the child sidebar item
 });
 
 // 1. Register the top-level parent menu
 registerSidebarEntry({
   name: 'nrc-plugin',
   label: 'Node Readiness',
-  icon: 'mdi:shield-check',
+  icon: 'mdi:shield-check', // A nice shield icon for the controller
   url: '/nrc-rules',
 });
 
