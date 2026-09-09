@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom';
-// Notice we import Resource here to get access to DetailsGrid
-import { NameValueTable, SimpleTable, Resource } from '@kinvolk/headlamp-plugin/lib/CommonComponents';
+import { Resource, SimpleTable } from '@kinvolk/headlamp-plugin/lib/CommonComponents';
+import { Chip, Box } from '@mui/material';
 import { NodeReadinessRule } from './index'; 
 
 export default function NodeReadinessRuleDetails() {
@@ -10,40 +10,52 @@ export default function NodeReadinessRuleDetails() {
     <Resource.DetailsGrid
       resourceType={NodeReadinessRule}
       name={name!}
-      // DetailsGrid allows us to inject our custom tables perfectly via extraInfo
       extraInfo={(rule: InstanceType<typeof NodeReadinessRule> | null) => {
         if (!rule) return [];
         const spec = rule.jsonData?.spec || {};
         
         return [
           {
-            name: 'Configuration',
-            value: (
-              <NameValueTable
-                rows={[
-                  { name: 'Enforcement Mode', value: spec.enforcementMode || 'N/A' },
-                  { name: 'Condition Policy', value: spec.conditionPolicy || 'allOf' },
-                  { name: 'Dry Run', value: spec.dryRun ? 'True' : 'False' },
-                  { 
-                    name: 'Node Selector', 
-                    value: spec.nodeSelector?.matchLabels 
-                      ? JSON.stringify(spec.nodeSelector.matchLabels) 
-                      : 'None (Matches all nodes)' 
-                  },
-                ]}
-              />
-            )
+            name: 'Node Selector',
+            value: spec.nodeSelector?.matchLabels
+              ? (
+                <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                  {Object.entries(spec.nodeSelector.matchLabels).map(([key, val]) => (
+                    <Chip key={key} label={`${key}: ${val}`} size="small" variant="outlined" />
+                  ))}
+                </Box>
+              )
+              : 'None (Matches all nodes)'
           },
           {
-            name: 'Taint applied on failure',
+            name: 'Enforcement Mode',
+            value: <Chip label={spec.enforcementMode || 'N/A'} size="small" variant="outlined" />
+          },
+          {
+            name: 'Dry-run',
+            value: spec.dryRun 
+              ? <Chip label="🟡 Yes" size="small" color="warning" />
+              : <Chip label="🟢 No" size="small" color="success" />
+          },
+          {
+            name: 'Condition Policy',
+            value: spec.conditionPolicy || 'N/A'
+          },
+          {
+            name: 'Taint',
+            value: spec.taint
+              ? `${spec.taint.key}:${spec.taint.effect}`
+              : 'None'
+          },
+          {
+            name: 'Node Status',
             value: (
-              <NameValueTable
-                rows={[
-                  { name: 'Key', value: spec.taint?.key || 'None' },
-                  { name: 'Effect', value: spec.taint?.effect || 'None' },
-                  { name: 'Value', value: spec.taint?.value || '-' },
-                ]}
-              />
+              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                <Chip label="Targeted: -" size="small" />
+                <Chip label="Satisfied: -" size="small" color="success" />
+                <Chip label="Unsatisfied: -" size="small" color="error" />
+                <Chip label="Failed: -" size="small" color="warning" />
+              </Box>
             )
           },
           {
