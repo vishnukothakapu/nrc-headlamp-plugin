@@ -12,7 +12,8 @@
     "tsc": "headlamp-plugin tsc",
     "storybook": "headlamp-plugin storybook",
     "storybook-build": "headlamp-plugin storybook-build",
-    "test": "headlamp-plugin test",
+    "test": "vitest run -c node_modules/@kinvolk/headlamp-plugin/config/vite.config.mjs",
+    "test:watch": "vitest -c node_modules/@kinvolk/headlamp-plugin/config/vite.config.mjs",
     "i18n": "headlamp-plugin i18n"
   },
   "keywords": [

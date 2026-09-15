@@ -1,7 +1,8 @@
-import { useParams } from 'react-router-dom';
 import { Resource, SimpleTable } from '@kinvolk/headlamp-plugin/lib/CommonComponents';
-import { Chip, Box } from '@mui/material';
+import { Box,Chip } from '@mui/material';
+import { useParams } from 'react-router-dom';
 import { NodeReadinessRule } from './index';
+
 
 export default function NodeReadinessRuleDetails() {
   const { name } = useParams<{ name: string }>();
@@ -10,7 +11,7 @@ export default function NodeReadinessRuleDetails() {
     <Resource.DetailsGrid
       resourceType={NodeReadinessRule}
       name={name!}
-      withEvents={true}
+      withEvents
       extraInfo={(rule: InstanceType<typeof NodeReadinessRule> | null) => {
         if (!rule) return [];
         const spec = rule.jsonData?.spec || {};
@@ -52,6 +53,7 @@ export default function NodeReadinessRuleDetails() {
             name: 'Node Status',
             value: (
               <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                {/* TODO: calculate this dynamically from NodeReadinessEvaluations */}
                 <Chip label="Targeted: -" size="small" variant="outlined" />
                 <Chip label="Satisfied: -" size="small" color="success" />
                 <Chip label="Unsatisfied: -" size="small" color="error" />

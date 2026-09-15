@@ -1,34 +1,28 @@
-import React, { useState } from 'react';
-import { K8s } from '@kinvolk/headlamp-plugin/lib';
-import { Resource, Link, SimpleTable, SectionBox } from '@kinvolk/headlamp-plugin/lib/CommonComponents';
-import { useParams } from 'react-router-dom';
+import { Link, Resource, SectionBox,SimpleTable } from '@kinvolk/headlamp-plugin/lib/CommonComponents';
 import {
-  Chip,
-  Typography,
   Box,
+  Chip,
+  Collapse,
+  IconButton,
+  Paper,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
-  IconButton,
-  Collapse,
+  Typography,
 } from '@mui/material';
+import React, { useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { NodeReadinessEvaluation } from './index';
 
-// We redeclare the Custom Resource class so DetailsGrid can fetch it
-export class NodeReadinessEvaluation extends K8s.crd.makeCustomResourceClass({
-  apiInfo: [{ group: 'readiness.node.x-k8s.io', version: 'v1alpha1' }],
-  isNamespaced: false,
-  pluralName: 'nodereadinessevaluations',
-  singularName: 'nodereadinessevaluation',
-  kind: 'NodeReadinessEvaluation',
-}) {}
+
 
 interface RuleRowProps {
   rule: any;
 }
+
 
 function RuleEvaluationRow({ rule }: RuleRowProps) {
   const [open, setOpen] = useState(false);
@@ -36,9 +30,11 @@ function RuleEvaluationRow({ rule }: RuleRowProps) {
   const isSatisfied = rule.ruleStatus === 'Satisfied';
   const conditions = rule.conditions || [];
   const totalConditions = conditions.length;
+  // controller can return true as a boolean or 'True' as a string
   const satisfiedConditions = conditions.filter(
     (c: any) => c.satisfied === true || c.satisfied === 'True'
   ).length;
+  
   const allConditionsSatisfied = totalConditions > 0 && satisfiedConditions === totalConditions;
 
   return (
@@ -209,6 +205,7 @@ function RuleEvaluationRow({ rule }: RuleRowProps) {
   );
 }
 
+
 export default function NodeReadinessEvaluationDetails() {
   const { name } = useParams<{ name: string }>();
 
@@ -216,7 +213,7 @@ export default function NodeReadinessEvaluationDetails() {
     <Resource.DetailsGrid
       resourceType={NodeReadinessEvaluation}
       name={name!}
-      withEvents={true}
+      withEvents
       extraInfo={(evaluation: InstanceType<typeof NodeReadinessEvaluation> | null) => {
         if (!evaluation) return [];
 

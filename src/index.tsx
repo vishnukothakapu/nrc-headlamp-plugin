@@ -1,8 +1,10 @@
 import { K8s, registerRoute, registerSidebarEntry } from '@kinvolk/headlamp-plugin/lib';
 import { Link, ResourceListView } from '@kinvolk/headlamp-plugin/lib/CommonComponents';
-import { Chip, Tooltip, Typography } from '@mui/material'; 
-import NodeReadinessRuleDetails from './NodeReadinessRuleDetails';
+import { Chip, Typography } from '@mui/material'; 
 import NodeReadinessEvaluationDetails from './NodeReadinessEvaluationDetails';
+import NodeReadinessRuleDetails from './NodeReadinessRuleDetails';
+import ReadinessRulesPage from './NodeReadinessRuleList';
+
 
 export class NodeReadinessRule extends K8s.crd.makeCustomResourceClass({
   apiInfo: [{
@@ -15,7 +17,8 @@ export class NodeReadinessRule extends K8s.crd.makeCustomResourceClass({
   kind: 'NodeReadinessRule',
 }) {}
 
-class NodeReadinessEvaluation extends K8s.crd.makeCustomResourceClass({
+
+export class NodeReadinessEvaluation extends K8s.crd.makeCustomResourceClass({
   apiInfo: [{ group: 'readiness.node.x-k8s.io', version: 'v1alpha1' }],
   isNamespaced: false,
   pluralName: 'nodereadinessevaluations',
@@ -23,106 +26,7 @@ class NodeReadinessEvaluation extends K8s.crd.makeCustomResourceClass({
   kind: 'NodeReadinessEvaluation',
 }) {}
 
-function ReadinessRulesPage() {
-  return (
-    <ResourceListView
-      title="Node Readiness Rules"
-      resourceClass={NodeReadinessRule}
-      id="nrc-readiness-rules"
-      columns={[
-        {
-          id: 'name',
-          label: 'Name',
-          getValue: (rule: InstanceType<typeof NodeReadinessRule>) => (
-            <Link routeName="nrc-rule-details" params={{ name: rule.metadata.name }}>
-              {rule.metadata.name}
-            </Link>
-          ),
-        },
-        {
-          id: 'mode',
-          label: 'Mode',
-          getValue: (rule: InstanceType<typeof NodeReadinessRule>) => {
-            const mode = rule.jsonData?.spec?.enforcementMode || 'N/A';
-            return (
-              <Tooltip title={mode}>
-                <Chip label={mode} size="small" variant="outlined" />
-              </Tooltip>
-            );
-          },
-        },
-        {
-          id: 'dryRun',
-          label: 'Dry-run',
-          getValue: (rule: InstanceType<typeof NodeReadinessRule>) => {
-            const isDryRun = rule.jsonData?.spec?.dryRun;
-            return isDryRun ? <Chip label="Dry Run" size="small" color="warning" /> : '-';
-          },
-        },
-        {
-          id: 'satisfied',
-          label: 'Satisfied',
-          // Placeholder until we implement NodeReadinessEvaluation logic
-          getValue: () => '-',
-        },
-        {
-          id: 'failedNodes',
-          label: 'Failed Nodes',
-          show: false,
-          // Placeholder until we implement NodeReadinessEvaluation logic
-          getValue: () => '-',
-        },
-        {
-          id: 'missingConditions',
-          label: 'Missing Conditions',
-          show: false,
-          // Placeholder until we implement NodeReadinessEvaluation logic
-          getValue: () => '-',
-        },
-        {
-          id: 'nodeSelector',
-          label: 'Node Selector',
-          getValue: (rule: InstanceType<typeof NodeReadinessRule>) => {
-            const labels = rule.jsonData?.spec?.nodeSelector?.matchLabels;
-            if (!labels) return 'All Nodes';
-            
-            const numLabels = Object.keys(labels).length;
-            const tooltipText = JSON.stringify(labels, null, 2); 
-            
-            return (
-              <Tooltip title={<pre style={{ margin: 0, fontSize: '0.75rem' }}>{tooltipText}</pre>}>
-                <Chip label={`${numLabels} Label${numLabels > 1 ? 's' : ''}`} size="small" />
-              </Tooltip>
-            );
-          },
-        },
-        {
-          id: 'taintKey',
-          label: 'Taint',
-          getValue: (rule: InstanceType<typeof NodeReadinessRule>) =>
-            rule.jsonData?.spec?.taint?.key || 'None',
-        },
-        {
-          id: 'taintEffect',
-          label: 'Effect',
-          getValue: (rule: InstanceType<typeof NodeReadinessRule>) => {
-            const effect = rule.jsonData?.spec?.taint?.effect || 'None';
-            return <Chip label={effect} size="small" />;
-          },
-        },
-        {
-          id: 'conditionPolicy',
-          label: 'Condition Policy',
-          getValue: (rule: InstanceType<typeof NodeReadinessRule>) => {
-            const policy = rule.jsonData?.spec?.conditionPolicy || 'N/A';
-            return <Chip label={policy} size="small" color="primary" variant="outlined" />;
-          },
-        },
-        'age',
-      ]}
-    />
-  );
-}
+
 
 function NodeReadinessEvaluationsPage() {
   return (
@@ -140,6 +44,7 @@ function NodeReadinessEvaluationsPage() {
           getValue: (nre: InstanceType<typeof NodeReadinessEvaluation>) =>
             nre.jsonData?.spec?.nodeName || nre.metadata.name,
           render: (nre: InstanceType<typeof NodeReadinessEvaluation>) => {
+            // fallback to resource name if nodeName isn't specified
             const nodeName = nre.jsonData?.spec?.nodeName || nre.metadata.name;
             return (
               <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -169,6 +74,7 @@ function NodeReadinessEvaluationsPage() {
           render: (nre: InstanceType<typeof NodeReadinessEvaluation>) => {
             const state = nre.jsonData?.status?.state;
             const isAvailable = state === 'Available';
+            
             return (
               <Chip
                 label={state || 'Unknown'}
